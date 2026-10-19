@@ -28,6 +28,8 @@
 html,body{height:100%;background:#0d1016;color:var(--ink);overflow:hidden}
 body{font-family:var(--ui);font-variant-numeric:tabular-nums}
 #sky{position:fixed;inset:0;width:100%;height:100%;z-index:0}
+#bg{position:fixed;inset:0;width:100%;height:100%;max-width:none;object-fit:cover;z-index:0}
+body.photo .shade{background:linear-gradient(180deg,rgba(0,0,0,.45) 0%,rgba(0,0,0,.1) 30%,rgba(0,0,0,.1) 55%,rgba(0,0,0,.7) 100%)}
 .shade{position:fixed;inset:0;z-index:1;pointer-events:none;
   background:linear-gradient(180deg,rgba(0,0,0,.25) 0%,rgba(0,0,0,0) 30%,rgba(0,0,0,0) 55%,rgba(0,0,0,.55) 100%)}
 .board{position:relative;z-index:2;height:100%;display:grid;
@@ -85,6 +87,7 @@ body{font-family:var(--ui);font-variant-numeric:tabular-nums}
 </head>
 <body>
 <canvas id="sky" aria-hidden="true"></canvas>
+<img id="bg" src="bg.jpg" alt="" hidden>
 <div class="shade"></div>
 
 <main class="board" id="board">
@@ -245,10 +248,15 @@ function ramadanInfo(n){
 
 /* ---------- السماء (ترسم مرة كل دقيقة لتخفيف الحمل على الشاشة) ---------- */
 var cv = document.getElementById('sky'), cx = cv.getContext('2d');
+// إذا وُجدت صورة bg.jpg بجانب الصفحة تصير هي الخلفية، وإلا نرسم السماء
+var usePhoto = false, bgImg = document.getElementById('bg');
+bgImg.addEventListener('load', function(){ usePhoto = true; bgImg.hidden = false; cv.hidden = true; document.body.classList.add('photo'); });
+bgImg.addEventListener('error', function(){ bgImg.remove(); });
 function lerp(a, b, t){ return a + (b - a) * t; }
 function mix(c1, c2, t){ return 'rgb(' + [0, 1, 2].map(function(i){ return Math.round(lerp(c1[i], c2[i], t)); }).join(',') + ')'; }
 var STARS = []; (function(){ var r = 7; for (var i = 0; i < 140; i++){ r = (r * 9301 + 49297) % 233280; var a = r / 233280; r = (r * 9301 + 49297) % 233280; var b = r / 233280; r = (r * 9301 + 49297) % 233280; STARS.push([a, b * 0.6, r / 233280]); } })();
 function drawSky(phase){
+  if (usePhoto) return;
   // phase: 0 ليل، 1 نهار، وما بينهما فجر/غروب
   var w = cv.width = window.innerWidth, h = cv.height = window.innerHeight;
   var night = [[8, 12, 26], [22, 28, 52], [46, 40, 58]];
